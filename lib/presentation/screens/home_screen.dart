@@ -589,7 +589,7 @@ class _WhyUs extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           crossAxisSpacing: 12,
           mainAxisSpacing: 12,
-          childAspectRatio: 1.5,
+          childAspectRatio: 1.25,
           children: _features.map((f) {
             return Container(
               padding: const EdgeInsets.all(14),
