@@ -559,13 +559,60 @@ class _DestCard extends StatelessWidget {
   }
 }
 
-class _WhyUs extends StatelessWidget {
+class _WhyUs extends StatefulWidget {
+  @override
+  State<_WhyUs> createState() => _WhyUsState();
+}
+
+class _WhyUsState extends State<_WhyUs> with SingleTickerProviderStateMixin {
   static const _features = [
     (Icons.verified_user_outlined, 'Safety First', 'Monitored journeys & trained drivers'),
     (Icons.confirmation_number_outlined, 'e-Tickets', 'Instant digital tickets'),
     (Icons.support_agent_outlined, '24/7 Support', 'Always here for you'),
     (Icons.event_repeat_outlined, 'Easy Reschedule', 'Change plans hassle-free'),
   ];
+
+  late AnimationController _controller;
+  late List<Animation<double>> _fadeAnims;
+  late List<Animation<Offset>> _slideAnims;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+    );
+
+    _fadeAnims = List.generate(_features.length, (i) {
+      final start = (i * 0.18).clamp(0.0, 1.0);
+      final end = (start + 0.5).clamp(0.0, 1.0);
+      return CurvedAnimation(
+        parent: _controller,
+        curve: Interval(start, end, curve: Curves.easeOut),
+      );
+    });
+
+    _slideAnims = List.generate(_features.length, (i) {
+      final start = (i * 0.18).clamp(0.0, 1.0);
+      final end = (start + 0.5).clamp(0.0, 1.0);
+      return Tween<Offset>(
+        begin: const Offset(0.25, 0),
+        end: Offset.zero,
+      ).animate(CurvedAnimation(
+        parent: _controller,
+        curve: Interval(start, end, curve: Curves.easeOut),
+      ));
+    });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) => _controller.forward());
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -582,41 +629,79 @@ class _WhyUs extends StatelessWidget {
                 ?.copyWith(fontWeight: FontWeight.bold),
           ),
         ),
-        GridView.count(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          crossAxisCount: 2,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-          childAspectRatio: 1.25,
-          children: _features.map((f) {
-            return Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                    color: const Color(0xFFBFC9C4).withOpacity(0.5)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(f.$1, color: AppTheme.primary, size: 24),
-                  const SizedBox(height: 8),
-                  Text(f.$2,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 13)),
-                  const SizedBox(height: 2),
-                  Text(f.$3,
-                      style: const TextStyle(
-                          color: AppTheme.onSurfaceVariant, fontSize: 11)),
-                ],
-              ),
-            );
-          }).toList(),
+        SizedBox(
+          height: 150,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: _features.length,
+            separatorBuilder: (context, _) => const SizedBox(width: 12),
+            itemBuilder: (context, i) {
+              final f = _features[i];
+              return FadeTransition(
+                opacity: _fadeAnims[i],
+                child: SlideTransition(
+                  position: _slideAnims[i],
+                  child: _FeatureCard(icon: f.$1, title: f.$2, subtitle: f.$3),
+                ),
+              );
+            },
+          ),
         ),
       ],
+    );
+  }
+}
+
+class _FeatureCard extends StatelessWidget {
+  const _FeatureCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 158,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFBFC9C4).withOpacity(0.5)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppTheme.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: AppTheme.primary, size: 22),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            title,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+          ),
+          const SizedBox(height: 3),
+          Expanded(
+            child: Text(
+              subtitle,
+              style: const TextStyle(
+                  color: AppTheme.onSurfaceVariant, fontSize: 11),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
